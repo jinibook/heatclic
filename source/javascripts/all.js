@@ -16,12 +16,14 @@ function login(event) {
   FB.login(function(response) {
     if (response.authResponse) {
       FB.api('/me', function(response) {
+        window.user = response;
         startGame(response);
+        fetchTaggableFriends();
       });
     } else {
       console.log('User cancelled login or did not fully authorize.');
     }
-  });
+  }, { scope: 'user_friends' });
 }
 
 function pickWeapon(event) {
@@ -68,8 +70,11 @@ function createPulseCircle(initialSize) {
 
 function initMainCircle() {
   var clicks = 0;
-  var increment = 40;
+  var increment = 80;
   var $mainCircle = $('#game-circle');
+
+  var viewportWidth = $(window).width();
+  var maxCircleWidth = viewportWidth * .5;
 
   $mainCircle.click(function() {
     clicks++;
@@ -77,13 +82,72 @@ function initMainCircle() {
     var size = $mainCircle.width();
     var newSize = size + increment;
 
-    createPulseCircle(size);
+    if (size >= maxCircleWidth) {
+      showResults();
+    } else {
+      createPulseCircle(size);
 
-    setTimeout(function() {
-      $mainCircle.css({
-        width: newSize,
-        height: newSize,
-      });
-    }, 100);
+      setTimeout(function() {
+        $mainCircle.css({
+          width: newSize,
+          height: newSize,
+        });
+      }, 150);
+    }
   });
+}
+
+function showResults() {
+  var $mainCircle = $('#game-circle');
+  var viewportWidth = $(window).width();
+  var newSize = viewportWidth * 2;
+
+  $mainCircle.css({
+    transition: 'all 1.5s ease-in-out',
+    width: newSize,
+    height: newSize
+  });
+
+  setTimeout(function() {
+    var randomFriends = [];
+    for (var i=0; i < 4; i++) {
+      var randomIndex = Math.floor(Math.random() * taggableFriends.length)
+      randomFriends.push(taggableFriends[randomIndex]);
+    }
+
+    $('#results-page .js-friend').each(function(i, el) {
+      var friend = randomFriends[i];
+      if (friend) {
+        $(el).find('img').prop('src', friend.picture.data.url);
+      }
+    })
+
+    randomFriends.forEach(function(friend, i) {
+
+    });
+
+    $('#results-page').fadeIn();
+  }, 500);
+}
+
+// Because Facebook is unlikely to allow us access to the taggable_friends
+// permission, we can try this:
+// User `user_photos` permission to fetch the list of albums, photos, and then
+// tags in the photos. Find 4 photos where users who are not the current user ID
+// are tagged... it will even give us x/y coordinates of the tag.
+// https://developers.facebook.com/tools/explorer/1731066050465823?method=GET&path=1661845980181%2Ftags&version=v2.6
+
+var taggableFriends = [];
+function fetchTaggableFriends() {
+  function fetch(path) {
+    FB.api(path, function(response) {
+      taggableFriends = taggableFriends.concat(response.data);
+
+      if (response.paging.next) {
+        fetch(response.paging.next);
+      }
+    });
+  }
+
+  fetch('/' + user.id + '/taggable_friends');
 }

@@ -13,7 +13,7 @@
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
 
-  transition: all .1s ease-in-out;
+  transition: all .2s ease-in-out;
   z-index: 2;
 }
 
@@ -32,4 +32,9 @@
 
   transition: all 2s ease-in-out;
   z-index: 1;
+}
+
+#results-page {
+  position: relative;
+  z-index: 3;
 }
