@@ -131,6 +131,3 @@ DEPENDENCIES
   middleman-compass (>= 4.0.0)
   middleman-livereload
   middleman-sprockets (~> 4.0)
-
-BUNDLED WITH
-   1.12.5
